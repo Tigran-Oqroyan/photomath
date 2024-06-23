@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Back Camera Access</title>
+    <title>Front and Back Camera Access</title>
     <style>
         body {
             margin: 0;
@@ -13,38 +13,48 @@
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
+            flex-direction: column;
         }
         video {
             width: 100%;
             height: auto;
             max-width: 600px;
             background-color: black;
+            margin: 10px;
         }
     </style>
 </head>
 <body>
-    <video id="video" autoplay playsinline></video>
+    <video id="backCamera" autoplay playsinline></video>
+    <video id="frontCamera" autoplay playsinline></video>
     <script>
-        navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: { exact: "environment" }
-            }
-        })
-        .then(stream => {
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            video.play();
-        })
-        .catch(err => {
-            console.error('Failed to access user media: ', err);
-            if (err.name === 'NotAllowedError') {
-                alert('Please provide permission to access the camera');
-            } else if (err.name === 'OverconstrainedError') {
-                alert('No back camera found. Please switch to a device with a back camera.');
-            } else {
-                alert('Error accessing camera: ' + err.message);
-            }
-        });
+        function startCamera(videoElement, facingMode) {
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { exact: facingMode }
+                }
+            })
+            .then(stream => {
+                videoElement.srcObject = stream;
+                videoElement.play();
+            })
+            .catch(err => {
+                console.error(`Failed to access ${facingMode} camera: `, err);
+                if (err.name === 'NotAllowedError') {
+                    alert('Please provide permission to access the camera');
+                } else if (err.name === 'OverconstrainedError') {
+                    alert(`No ${facingMode} camera found. Please switch to a device with a ${facingMode} camera.`);
+                } else {
+                    alert('Error accessing camera: ' + err.message);
+                }
+            });
+        }
+
+        const backCamera = document.getElementById('backCamera');
+        const frontCamera = document.getElementById('frontCamera');
+
+        startCamera(backCamera, 'environment');
+        startCamera(frontCamera, 'user');
     </script>
 </body>
 </html>
