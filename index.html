@@ -57,10 +57,13 @@
 
         toggleButton.addEventListener('click', () => {
             const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            count++;
             startCamera(newFacingMode);
+            
         });
 
         if(count === 0){
+            console.log("enter");
             startCamera(currentFacingMode);
         }
     </script>
