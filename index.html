@@ -36,27 +36,23 @@
     <script>
         let count = 0;
         let currentFacingMode = 'user';
-        const video = document.getElementById('camera');
         const toggleButton = document.getElementById('toggleButton');
 
-        function startCamera(facingMode) {
-            try {
-                const stream = navigator.mediaDevices.getUserMedia({
+        function startCamera(facingMode) {   
+               navigator.mediaDevices.getUserMedia({
                     video: { facingMode: { exact: facingMode } }
+                }).then(stream => {
+                    const video = document.getElementById('camera');
+                    video.srcObject = stream;
+                    video.play();
+                    currentFacingMode = facingMode; 
+
+                }).catch(err => {
+                    console.error('Failed to access user media: ' , err);
+                    if(err.name === "NotAAllowedError"){
+                        alert('Please provide permission to access the camera');
+                    }
                 });
-                video.srcObject = stream;
-                video.play();
-                currentFacingMode = facingMode; // Update current facing mode
-            } catch (err) {
-                console.error(`Failed to access ${facingMode} camera: `, err);
-                if (err.name === 'NotAllowedError') {
-                    alert('Please provide permission to access the camera');
-                } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-                    alert(`No ${facingMode} camera found. Please switch to a device with a ${facingMode} camera.`);
-                } else {
-                    alert(`Error accessing ${facingMode} camera: ` + err.message);
-                }
-            }
         }
 
         toggleButton.addEventListener('click', () => {
@@ -64,7 +60,6 @@
             startCamera(newFacingMode);
         });
 
-        // Initially start with the front-facing camera ('user')
         if(count === 0){
             startCamera(currentFacingMode);
         }
