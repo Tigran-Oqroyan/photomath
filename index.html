@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Front and Back Camera Switch</title>
     <style>
         body {
             margin: 0;
@@ -13,37 +13,51 @@
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
+            flex-direction: column;
         }
         video {
             width: 100%;
             height: auto;
             max-width: 600px;
             background-color: black;
+            margin: 10px;
         }
     </style>
 </head>
 <body>
-    <video id="video" autoplay playsinline></video>
+    <video id="camera" autoplay playsinline></video>
     <script>
-        navigator.mediaDevices.getUserMedia({
-            audio: false, 
-            video: {
-                facingMode: {exact: "environment"}
-            }
-        })
-            .then(stream => {
-                const video = document.getElementById('video');
+        let currentFacingMode = 'user';
+        const video = document.getElementById('camera');
+
+        async function startCamera(facingMode) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: facingMode } }
+                });
                 video.srcObject = stream;
                 video.play();
-            })
-            .catch(err => {
-                console.error('Failed to access user media: ' , err);
-                if(err.name === 'NotAllowedError'){
+            } catch (err) {
+                console.error(`Failed to access ${facingMode} camera: `, err);
+                if (err.name === 'NotAllowedError') {
                     alert('Please provide permission to access the camera');
+                } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
+                    alert(`No ${facingMode} camera found. Please switch to a device with a ${facingMode} camera.`);
                 } else {
-                    alert('Error accessing camera: ' + err.message);
+                    alert(`Error accessing ${facingMode} camera: ` + err.message);
                 }
-            });
+            }
+        }
+
+        function switchCamera() {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startCamera(currentFacingMode);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            startCamera(currentFacingMode);
+            setInterval(switchCamera, 5000);
+        });
     </script>
 </body>
 </html>
