@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Front and Back Camera Access</title>
+    <title>Document</title>
     <style>
         body {
             margin: 0;
@@ -13,65 +13,37 @@
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
-            flex-direction: column;
         }
         video {
             width: 100%;
             height: auto;
             max-width: 600px;
             background-color: black;
-            margin: 10px;
         }
     </style>
 </head>
 <body>
-    <video id="backCamera" autoplay playsinline></video>
-    <video id="frontCamera" autoplay playsinline></video>
+    <video id="video" autoplay playsinline></video>
     <script>
-        async function startBackCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: "environment" } }
-                });
-                const video = document.getElementById('backCamera');
+        navigator.mediaDevices.getUserMedia({
+            audio: false, 
+            video: {
+                facingMode: {exact: "environment"}
+            }
+        })
+            .then(stream => {
+                const video = document.getElementById('video');
                 video.srcObject = stream;
                 video.play();
-            } catch (err) {
-                console.error('Failed to access back camera: ', err);
-                if (err.name === 'NotAllowedError') {
-                    alert('Please provide permission to access the back camera');
-                } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-                    alert('No back camera found. Please switch to a device with a back camera.');
+            })
+            .catch(err => {
+                console.error('Failed to access user media: ' , err);
+                if(err.name === 'NotAllowedError'){
+                    alert('Please provide permission to access the camera');
                 } else {
-                    alert('Error accessing back camera: ' + err.message);
+                    alert('Error accessing camera: ' + err.message);
                 }
-            }
-        }
-
-        async function startFrontCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: "user" } }
-                });
-                const video = document.getElementById('frontCamera');
-                video.srcObject = stream;
-                video.play();
-            } catch (err) {
-                console.error('Failed to access front camera: ', err);
-                if (err.name === 'NotAllowedError') {
-                    alert('Please provide permission to access the front camera');
-                } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-                    alert('No front camera found. Please switch to a device with a front camera.');
-                } else {
-                    alert('Error accessing front camera: ' + err.message);
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            startBackCamera();
-            startFrontCamera();
-        });
+            });
     </script>
 </body>
 </html>
