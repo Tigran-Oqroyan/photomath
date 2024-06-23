@@ -28,26 +28,32 @@
     <video id="backCamera" autoplay playsinline></video>
     <video id="frontCamera" autoplay playsinline></video>
     <script>
-        function startCamera(videoElement, facingMode) {
-            navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: { exact: facingMode }
-                }
-            })
-            .then(stream => {
+        async function startCamera(videoElement, facingMode) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: facingMode } }
+                });
                 videoElement.srcObject = stream;
                 videoElement.play();
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error(`Failed to access ${facingMode} camera: `, err);
                 if (err.name === 'NotAllowedError') {
                     alert('Please provide permission to access the camera');
-                } else if (err.name === 'OverconstrainedError') {
+                } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
                     alert(`No ${facingMode} camera found. Please switch to a device with a ${facingMode} camera.`);
+                    // Fallback to default camera if specified camera is not found
+                    try {
+                        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        videoElement.srcObject = fallbackStream;
+                        videoElement.play();
+                    } catch (fallbackErr) {
+                        console.error('Failed to access any camera: ', fallbackErr);
+                        alert('Error accessing camera: ' + fallbackErr.message);
+                    }
                 } else {
                     alert('Error accessing camera: ' + err.message);
                 }
-            });
+            }
         }
 
         const backCamera = document.getElementById('backCamera');
