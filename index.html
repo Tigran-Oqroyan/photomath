@@ -28,54 +28,50 @@
     <video id="backCamera" autoplay playsinline></video>
     <video id="frontCamera" autoplay playsinline></video>
     <script>
-        async function startCamera(videoElement, facingMode) {
+        async function startBackCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: facingMode } }
+                    video: { facingMode: { exact: "environment" } }
                 });
-                videoElement.srcObject = stream;
-                videoElement.play();
+                const video = document.getElementById('backCamera');
+                video.srcObject = stream;
+                video.play();
             } catch (err) {
-                console.error(`Failed to access ${facingMode} camera: `, err);
+                console.error('Failed to access back camera: ', err);
                 if (err.name === 'NotAllowedError') {
-                    alert('Please provide permission to access the camera');
+                    alert('Please provide permission to access the back camera');
                 } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-                    console.warn(`No ${facingMode} camera found. Attempting fallback.`);
-                    // Fallback to default camera if specified camera is not found
-                    try {
-                        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                        videoElement.srcObject = fallbackStream;
-                        videoElement.play();
-                    } catch (fallbackErr) {
-                        console.error('Failed to access any camera: ', fallbackErr);
-                        alert('Error accessing camera: ' + fallbackErr.message);
-                    }
+                    alert('No back camera found. Please switch to a device with a back camera.');
                 } else {
-                    alert('Error accessing camera: ' + err.message);
+                    alert('Error accessing back camera: ' + err.message);
                 }
             }
         }
 
-        async function listCameras() {
+        async function startFrontCamera() {
             try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                console.log('Available video devices:', videoDevices);
-                if (videoDevices.length === 0) {
-                    alert('No video devices found.');
-                }
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: "user" } }
+                });
+                const video = document.getElementById('frontCamera');
+                video.srcObject = stream;
+                video.play();
             } catch (err) {
-                console.error('Error listing devices: ', err);
+                console.error('Failed to access front camera: ', err);
+                if (err.name === 'NotAllowedError') {
+                    alert('Please provide permission to access the front camera');
+                } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
+                    alert('No front camera found. Please switch to a device with a front camera.');
+                } else {
+                    alert('Error accessing front camera: ' + err.message);
+                }
             }
         }
 
-        const backCamera = document.getElementById('backCamera');
-        const frontCamera = document.getElementById('frontCamera');
-
-        startCamera(backCamera, 'environment');
-        startCamera(frontCamera, 'user');
-
-        listCameras();
+        document.addEventListener('DOMContentLoaded', () => {
+            startBackCamera();
+            startFrontCamera();
+        });
     </script>
 </body>
 </html>
