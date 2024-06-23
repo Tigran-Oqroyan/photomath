@@ -16,9 +16,9 @@
             flex-direction: column;
         }
         video {
-            width: 100%;
-            height: auto;
-            max-width: 600px;
+            width: 80%; /* Adjust the width percentage as needed */
+            max-width: 400px; /* Set a maximum width to maintain aspect ratio */
+            height: auto; /* Automatically adjust height to maintain aspect ratio */
             background-color: black;
             margin: 10px;
         }
@@ -34,38 +34,36 @@
     <video id="camera" autoplay playsinline></video>
     <button id="toggleButton">Toggle Camera</button>
     <script>
-        let count = 0;
         let currentFacingMode = 'user';
         const toggleButton = document.getElementById('toggleButton');
+        const video = document.getElementById('camera');
 
-        function startCamera(facingMode) {   
-               navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: facingMode } }
-                }).then(stream => {
-                    const video = document.getElementById('camera');
-                    video.srcObject = stream;
-                    video.play();
-                    currentFacingMode = facingMode; 
-
-                }).catch(err => {
-                    console.error('Failed to access user media: ' , err);
-                    if(err.name === "NotAAllowedError"){
-                        alert('Please provide permission to access the camera');
-                    }
-                });
+        function startCamera(facingMode) {
+            navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { exact: facingMode } }
+            }).then(stream => {
+                video.srcObject = stream;
+                video.play();
+                currentFacingMode = facingMode; // Update current facing mode
+            }).catch(err => {
+                console.error('Failed to access user media: ', err);
+                if (err.name === 'NotAllowedError') {
+                    alert('Please provide permission to access the camera');
+                } else if (err.name === 'NotFoundError' || err.name === 'OverconstrainedError') {
+                    alert(`No ${facingMode} camera found. Please switch to a device with a ${facingMode} camera.`);
+                } else {
+                    alert(`Error accessing ${facingMode} camera: ` + err.message);
+                }
+            });
         }
 
         toggleButton.addEventListener('click', () => {
             const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            count++;
             startCamera(newFacingMode);
-            
         });
 
-        if(count === 0){
-            console.log("enter");
-            startCamera(currentFacingMode);
-        }
+        // Initially start with the front-facing camera ('user')
+        startCamera(currentFacingMode);
     </script>
 </body>
 </html>
