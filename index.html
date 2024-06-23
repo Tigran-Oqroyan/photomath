@@ -40,7 +40,7 @@
                 if (err.name === 'NotAllowedError') {
                     alert('Please provide permission to access the camera');
                 } else if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-                    alert(`No ${facingMode} camera found. Please switch to a device with a ${facingMode} camera.`);
+                    console.warn(`No ${facingMode} camera found. Attempting fallback.`);
                     // Fallback to default camera if specified camera is not found
                     try {
                         const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -56,11 +56,26 @@
             }
         }
 
+        async function listCameras() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                console.log('Available video devices:', videoDevices);
+                if (videoDevices.length === 0) {
+                    alert('No video devices found.');
+                }
+            } catch (err) {
+                console.error('Error listing devices: ', err);
+            }
+        }
+
         const backCamera = document.getElementById('backCamera');
         const frontCamera = document.getElementById('frontCamera');
 
         startCamera(backCamera, 'environment');
         startCamera(frontCamera, 'user');
+
+        listCameras();
     </script>
 </body>
 </html>
