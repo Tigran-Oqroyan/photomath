@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Front and Back Camera Switch</title>
+    <title>Toggle Camera Mode</title>
     <style>
         body {
             margin: 0;
@@ -22,13 +22,21 @@
             background-color: black;
             margin: 10px;
         }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <video id="camera" autoplay playsinline></video>
+    <button id="toggleButton">Toggle Camera</button>
     <script>
         let currentFacingMode = 'user';
         const video = document.getElementById('camera');
+        const toggleButton = document.getElementById('toggleButton');
 
         async function startCamera(facingMode) {
             try {
@@ -37,6 +45,7 @@
                 });
                 video.srcObject = stream;
                 video.play();
+                currentFacingMode = facingMode; // Update current facing mode
             } catch (err) {
                 console.error(`Failed to access ${facingMode} camera: `, err);
                 if (err.name === 'NotAllowedError') {
@@ -49,15 +58,13 @@
             }
         }
 
-        function switchCamera() {
-            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            startCamera(currentFacingMode);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            startCamera(currentFacingMode);
-            setInterval(switchCamera, 5000);
+        toggleButton.addEventListener('click', () => {
+            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startCamera(newFacingMode);
         });
+
+        // Initially start with the front-facing camera ('user')
+        startCamera(currentFacingMode);
     </script>
 </body>
 </html>
