@@ -34,13 +34,14 @@
     <video id="camera" autoplay playsinline></video>
     <button id="toggleButton">Toggle Camera</button>
     <script>
+        let count = 0;
         let currentFacingMode = 'user';
         const video = document.getElementById('camera');
         const toggleButton = document.getElementById('toggleButton');
 
-        async function startCamera(facingMode) {
+        function startCamera(facingMode) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
+                const stream = navigator.mediaDevices.getUserMedia({
                     video: { facingMode: { exact: facingMode } }
                 });
                 video.srcObject = stream;
@@ -64,7 +65,9 @@
         });
 
         // Initially start with the front-facing camera ('user')
-        startCamera(currentFacingMode);
+        if(count === 0){
+            startCamera(currentFacingMode);
+        }
     </script>
 </body>
 </html>
