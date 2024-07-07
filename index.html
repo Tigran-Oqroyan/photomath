@@ -1,118 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Toggle Camera Mode</title>
-    <style>
-      video {
-        width: 192px;
-        height: 192px;
-        background: rgba(0, 0, 0, 0.2);
-        -webkit-transform: scaleX(-1); /* mirror effect while using front cam */
-        transform: scaleX(-1); /* mirror effect while using front cam */
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baby Monitor</title>
+  <style>
+    video {
+      width: 192px;
+      height: 192px;
+      background: rgba(0, 0, 0, 0.2);
+      -webkit-transform: scaleX(-1); /* mirror effect while using front cam */
+      transform: scaleX(-1); /* mirror effect while using front cam */
+    }
 
-      #canvas {
-        width: 192px;
-        height: 192px;
-        -webkit-transform: scaleX(-1); /* mirror effect while using front cam */
-        transform: scaleX(-1); /* mirror effect while using front cam */
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container p-5" align="center">
-      <div class="">
-        <b>Your Cam:</b><br />
-        <video id="camera-stream" class="border border-5 border-danger"></video>
-      </div>
-      <div class="">
-        <button disabled id="flip-btn" class="btn btn-sm btn-warning">
-          Flip Camera
-        </button>
-        <button id="capture-camera" class="btn btn-sm btn-primary">
-          Take photo
-        </button>
-      </div>
-      <div class="mt-3">
-        <b>Output:</b>
-        <br />
-        <canvas
-          id="canvas"
-          class="bg-light shadow border border-5 border-success"
-        >
-        </canvas>
-      </div>
+    #canvas {
+      width: 192px;
+      height: 192px;
+      -webkit-transform: scaleX(-1); /* mirror effect while using front cam */
+      transform: scaleX(-1); /* mirror effect while using front cam */
+    }
+  </style>
+</head>
+<body>
+  <div class="container p-5" align="center">
+    <div>
+      <b>Your Cam:</b><br />
+      <video id="camera-stream" class="border border-5 border-danger" autoplay></video>
     </div>
+    <div>
+      <button id="capture-camera" class="btn btn-sm btn-primary">Take photo</button>
+    </div>
+    <div class="mt-3">
+      <b>Output:</b><br />
+      <canvas id="canvas" class="bg-light shadow border border-5 border-success"></canvas>
+    </div>
+  </div>
 
-    <script>
-      // camera stream video element
-      let on_stream_video = document.querySelector("#camera-stream");
-      // flip button element
-      let flipBtn = document.querySelector("#flip-btn");
+  <script>
+    const video = document.getElementById('camera-stream');
+    const canvas = document.getElementById('canvas');
+    const captureButton = document.getElementById('capture-camera');
 
-      // default user media options
-      let constraints = { audio: false, video: true };
-      let shouldFaceUser = true;
+    const constraints = {
+      video: {
+        width: { ideal: 192 },
+        height: { ideal: 192 },
+        facingMode: 'user'
+      },
+      audio: false
+    };
 
-      // check whether we can use facingMode
-      let supports = navigator.mediaDevices.getSupportedConstraints();
-      if (supports["facingMode"] === true) {
-        flipBtn.disabled = false;
-      }
+    let mediaRecorder;
+    let recordedChunks = [];
 
-      let stream = null;
+    // Access the camera
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(stream => {
+        video.srcObject = stream;
 
-      function capture() {
-        constraints.video = {
-          width: {
-            min: 192,
-            ideal: 192,
-            max: 192,
-          },
-          height: {
-            min: 192,
-            ideal: 192,
-            max: 192,
-          },
-          facingMode: shouldFaceUser ? "user" : "environment",
+        // Set up the MediaRecorder
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
         };
-        navigator.mediaDevices
-          .getUserMedia(constraints)
-          .then(function (mediaStream) {
-            stream = mediaStream;
-            on_stream_video.srcObject = stream;
-            on_stream_video.play();
-          })
-          .catch(function (err) {
-            console.log(err);
-          });
-      }
 
-      flipBtn.addEventListener("click", function () {
-        if (stream == null) return;
-        // we need to flip, stop everything
-        stream.getTracks().forEach((t) => {
-          t.stop();
-        });
-        // toggle / flip
-        shouldFaceUser = !shouldFaceUser;
-        capture();
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          document.body.appendChild(a);
+          a.style = 'display: none';
+          a.href = url;
+          a.download = 'baby-monitoring.webm';
+          a.click();
+          window.URL.revokeObjectURL(url);
+        };
+
+        mediaRecorder.start();
+      })
+      .catch(error => {
+        console.error('Error accessing media devices.', error);
       });
 
-      capture();
+    // Capture photo
+    captureButton.addEventListener('click', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    });
 
-      document
-        .getElementById("capture-camera")
-        .addEventListener("click", function () {
-          // Elements for taking the snapshot
-          const video = document.querySelector("video");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          canvas.getContext("2d").drawImage(video, 0, 0);
-        });
-    </script>
-  </body>
+    // Automatically stop recording and download video when the window is closed
+    window.addEventListener('beforeunload', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    });
+  </script>
+</body>
 </html>
